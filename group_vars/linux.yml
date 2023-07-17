@@ -1,0 +1,35 @@
+ansible_connection: ssh
+
+# * give each user their own `uid` ahead of time... just trust me on this
+# * make the username follow their Active Directory pattern (first initial, surname)
+# * you can generate your own passhash with `mkpasswd -m sha-512`
+#   or use a default passhash as follows (paul can tell you what this is)
+#   $6$yYIOgwiXWYhi$7Ghjjs9Qdf0V/TL4Vtu4diDj/n3sRrZUDDQVqszLGSuIjdxJj.1bMhHKPLBpEJ7TP3qtdhQvLPc86ywZPCS/v0
+#   remember to change the default passhash afterwards (you can fish the new password out of /etc/passwd)
+#   (we use nopassword sudo at the moment, so this isn't critical)
+
+# the pubkey files can hold multiple pubkeys - just add/remove them as you desire and reapply
+admin_user_list:
+  pmorahan:
+    state: present
+    remove: no
+    uid: 2000
+    groups: sudo,systemd-journal
+    shell: /bin/bash
+    passhash: $6$4wllyuda$9AxoI7rjB6a6at6AUoK4ElbTxhiRlW8VAtIugxZAkfjtMBLHYo.eJW2GTHEEuyXNFUhUHTAEXt5oAnU4s7Q6j0
+    key: "{{ lookup('file', 'pmorahan.pubkeys') }}"
+
+
+
+# dev users should be applied at the group/host level
+# define `add_dev_users: true` to add them in the relevant group_vars file,
+# but the user list should be here
+dev_user_list:
+  trasiah:
+    state: present
+    remove: no
+    uid: 3000
+    groups: systemd-journal
+    shell: /bin/bash
+    passhash: $6$yYIOgwiXWYhi$7Ghjjs9Qdf0V/TL4Vtu4diDj/n3sRrZUDDQVqszLGSuIjdxJj.1bMhHKPLBpEJ7TP3qtdhQvLPc86ywZPCS/v0
+    key: "{{ lookup('file', 'trasiah.pubkeys') }}"

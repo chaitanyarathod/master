@@ -1,0 +1,45 @@
+
+syntax on
+
+
+
+" elements of Troy's .vimrc that are permissible in vim-tiny
+
+set nocompatible	" Use Vim defaults (much better!)
+
+set pastetoggle=<F10>
+
+set bs=2		" allow backspacing over everything in insert mode
+"set bs=0		" vi compatible bs
+set nocindent	" probably a bad habit.  might switch on again later though
+set tw=78		" always limit the width of text to 78
+set nobackup		" keep a backup file
+set viminfo='20,\"50	" read/write a .viminfo file, don't store more " than 50 lines of registers
+set foldmethod=marker
+set foldopen+=jump
+set ai sm sr tabstop=4 shiftwidth=4
+set showbreak=+
+
+nmap <F2> :wa<Bar>exe "mksession! " .  v:this_session <CR>
+nmap <F3> :so ~/.vim/sessions/<C-D>
+map <M-q> !perl -MText::Autoformat -e'autoformat'
+
+""""""""""""""""""""""""""""""""
+filetype plugin on
+
+" Don't use Ex mode, use Q for formatting
+map Q gq
+
+augroup cprog
+  " Remove all cprog autocommands
+  au!
+
+augroup END
+
+" Mup
+au BufNewFile,BufRead *.mup           setf mup
+filetype plugin indent on
+"highlight Comment ctermfg=blue
+
+set paste
+set ruler

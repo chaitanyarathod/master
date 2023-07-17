@@ -1,0 +1,8 @@
+# show config file stripped of empty lines and comments beginning with # or ;
+alias meat='grep --color=never -P "^\s*+[^#|;]"'
+
+
+alias digs='dig +short'
+
+
+alias pmv="perl -le 'eval \"require \$ARGV[0]\" and print \$ARGV[0]->VERSION'"

@@ -1,0 +1,6 @@
+---
+- hosts: jumphosts
+  become: True
+  roles:
+  #- common
+  - users

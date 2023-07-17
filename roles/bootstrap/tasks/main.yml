@@ -1,0 +1,15 @@
+---
+
+- include: linux-bootstrap.yml
+  ignore_errors: '{{ ansible_check_mode }}'
+  tags: bootstrap init
+  when:
+  - "'linux' in group_names"
+  - "'bootstrap' in group_names"
+
+- include: windows-bootstrap.yml
+  ignore_errors: '{{ ansible_check_mode }}'
+  tags: bootstrap init
+  when:
+  - "'windows' in group_names"
+  - "'bootstrap' in group_names"

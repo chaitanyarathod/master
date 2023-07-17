@@ -1,0 +1,52 @@
+# Put your host in all groups that apply. You only need to put config items on one entry
+# The groups here affect which group_vars/ files are loaded, along with whatever you
+# put on the command line.
+#
+# Ansible tasks can be filtered on multiple groups for better targetting - see the
+# bootstrap role's tasks/main.yml for an example
+#
+# This file does not do nested groups well - duplicate group names cause weird behaviour
+# (eg: an 'aws' group under both linux and windows will read both config files, and
+# you'll end up with a windows connection attempt against a linux host). Not that
+# duplicate *hosts* names are fine (and expected workflow)
+#
+# the 'children:' thing is a legacy issue from when this file was in .ini format.
+# it means that the subelements are also groups
+all:
+    children:
+        bootstrap:
+            hosts:
+                jumphost-slvops:
+
+        linux:
+            hosts:
+                jumphost-slvops:
+                    ansible_ssh_host: jump.slv.tools # DNS/IP address as target
+                devel:    # TODO: move this out of the 'prod' inventory file, it's just here as an example
+                    ansible_ssh_host: devel
+
+
+        windows:
+            hosts:
+                l33th4x3nb0x:
+
+        aws:
+            hosts:
+                jumphost-slvops:
+
+
+        latrobe:
+            hosts:
+                devel:
+                    ansible_ssh_host: devel
+
+
+        jumphosts:
+            hosts:
+                jumphost-slvops:
+                    ansible_ssh_host: jump.slv.tools
+
+        webservers:
+            hosts:
+                devel:
+                    ansible_ssh_host: devel

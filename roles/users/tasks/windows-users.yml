@@ -1,0 +1,4 @@
+# TODO:
+# instead of individual users, we'll probably
+# need to set up Active Directory enrollment here
+# or possibly as a separate module

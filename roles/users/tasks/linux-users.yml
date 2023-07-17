@@ -1,0 +1,109 @@
+---
+# there are essentially two groups of users here
+# - admin users, who should get added to all linux hosts
+# - dev users, who get specifically added to hosts/groups via host_vars/group_vars
+
+# The linux user groups are specified in the user lists, which are kept in
+# `group_vars/linux.yml`.
+
+# Admins should be in `sudo`, devs should not be in `sudo`.  If you want devs
+# to have additional privileges on a *specific* host... we'll need to figure
+# something else out. Or give them a second user in the 'host' list
+
+# The 'hosts' and 'groups' users in this file do not exist at time of writing,
+# but are a mechanism to add specific users to specific boxes (eg: an external
+# developer) should the need arise. The user dictionary for that class of user
+# should be put in the relevant host_vars or group_vars file
+
+- name: add admin users
+  user:
+    name: '{{ item.key }}'
+    uid:  '{{ item.value.uid }}'
+    groups: '{{ item.value.groups }}'
+    shell: '{{ item.value.shell }}'
+    password: '{{ item.value.passhash }}'
+    state: '{{ item.value.state }}'
+    remove: '{{ item.value.remove }}'
+  with_dict: '{{ admin_user_list }}'
+  when: enable_admin_users
+
+- name: add admin user ssh keys
+  authorized_key:
+    user: '{{ item.key }}'
+    key: '{{ item.value.key }}'
+  with_dict: '{{ admin_user_list }}'
+  when: enable_admin_users
+
+- name: add dev users
+  # generally these shouldn't be in the sudo group/have admin, but maybe
+  user:
+    name: '{{ item.key }}'
+    uid:  '{{ item.value.uid }}'
+    groups: '{{ item.value.groups }}'
+    shell: '{{ item.value.shell }}'
+    password: '{{ item.value.passhash }}'
+    state: '{{ item.value.state }}'
+    remove: '{{ item.value.remove }}'
+  with_dict: '{{ dev_user_list }}'
+  when:
+  - enable_dev_users
+  - dev_user_list
+
+- name: add dev user ssh keys
+  authorized_key:
+    user: '{{ item.key }}'
+    key: '{{ item.value.key }}'
+  with_dict: '{{ dev_user_list }}'
+  when:
+  - enable_dev_users
+  - dev_user_list
+
+- name: add group-specific users
+  # define these in group_vars/
+  # still need ssh pubkey in this role's files/
+  user:
+    name: '{{ item.key }}'
+    uid:  '{{ item.value.uid }}'
+    groups: '{{ item.value.groups }}'
+    shell: '{{ item.value.shell }}'
+    password: '{{ item.value.passhash }}'
+    state: '{{ item.value.state }}'
+    remove: '{{ item.value.remove }}'
+  with_dict: '{{ group_user_list }}'
+  when:
+  - enable_group_users
+  - group_user_list
+
+- name: add group user ssh keys
+  authorized_key:
+    user: '{{ item.key }}'
+    key: '{{ item.value.key }}'
+  with_dict: '{{ group_user_list }}'
+  when:
+  - enable_group_users
+  - group_user_list
+
+- name: add host-specific users
+  # define these in host_vars/
+  # still need ssh pubkey in this role's files/
+  user:
+    name: '{{ item.key }}'
+    uid:  '{{ item.value.uid }}'
+    groups: '{{ item.value.groups }}'
+    shell: '{{ item.value.shell }}'
+    password: '{{ item.value.passhash }}'
+    state: '{{ item.value.state }}'
+    remove: '{{ item.value.remove }}'
+  with_dict: '{{ host_user_list }}'
+  when:
+  - enable_host_users
+  - host_user_list
+
+- name: add host-specific user ssh keys
+  authorized_key:
+    user: '{{ item.key }}'
+    key: '{{ item.value.key }}'
+  with_dict: '{{ host_user_list }}'
+  when:
+  - enable_host_users
+  - host_user_list

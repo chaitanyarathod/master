@@ -1,0 +1,22 @@
+---
+
+# The bootstrapping role is for doing tasks to do minimal initialisation of a
+# server, to get it into a state where it can accept its normal playbook.
+# Mostly it's about initial admin user setup, allowing further changes to be
+# made, but any other "must happen very early on" changes can be made here.
+
+# the bootstrap playbook is only meant to be run once, to bootstrap, and then
+# the usual playbook should be run for that server
+
+# To run bootstrap, you will need to put the target host into the bootstrap
+# and linux/windows group, and specify the target's initial admin user on
+# the commandline. Other playbooks use your normal user, which will need admin
+# rights
+
+# ansible-playbook -i [prod|dev] -u $ADMIN_USER --keyfile ~/.ssh/blah.key bootstrap.yml
+
+- hosts: bootstrap
+  become: true
+  roles:
+  - bootstrap
+  - users

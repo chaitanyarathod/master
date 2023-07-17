@@ -1,0 +1,71 @@
+---
+- name: set hostname
+  ansible.builtin.hostname:
+    name: "{{ inventory_hostname }}"
+  when: set_hostname
+
+# add to redhat as well
+- name: add sudo group
+  group:
+    name: sudo
+  #when: ansible_os_family == 'Debian'
+
+- name: nopasswd sudo
+  lineinfile:
+    path: /etc/sudoers
+    state: present
+    regexp: '^\%sudo    ALL=\(ALL:ALL\) ALL'
+    line: '%sudo ALL=(ALL:ALL) NOPASSWD:ALL'
+    validate: '/usr/sbin/visudo -cf %s'
+  when: ansible_os_family == 'Debian'
+
+
+# Dotfiles done here to ensure they're present before we start adding users,
+# but should also be managed in `common`
+- name: add /etc/bash.bashrc
+  template:
+    src: etc-bash.bashrc
+    dest: /etc/bash.bashrc
+
+- name: change admin user .bashrc (Debian)
+  template:
+    src: skel/bashrc
+    dest: /home/admin/.bashrc
+    owner: admin
+    group: admin
+    mode: 0644
+  when: ansible_distribution == 'Debian'
+- name: change ubuntu user .bashrc (Ubuntu)
+  template:
+    src: skel/bashrc
+    dest: /home/ubuntu/.bashrc
+    owner: ubuntu
+    group: ubuntu
+    mode: 0644
+  when: ansible_distribution == 'Ubuntu'
+- name: update .bashrc for user 'root'
+  template:
+    src: skel/bashrc
+    dest: /root/.bashrc
+    owner: root
+    group: root
+    mode: 0644
+
+- name: update root dotfiles
+  template:
+    src: templates/skel/{{ item }}
+    dest: /root/.{{item}}
+  with_items:
+  - bashrc
+  - bash_aliases
+  - vimrc
+
+- name: add dotfiles to /etc/skel
+  template:
+    src: templates/skel/{{ item }}
+    dest: /etc/skel/.{{ item }}
+  with_items:
+  - bashrc
+  - bash_aliases
+  - vimrc
+
