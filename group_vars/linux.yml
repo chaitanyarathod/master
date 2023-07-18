@@ -18,6 +18,14 @@ admin_user_list:
     shell: /bin/bash
     passhash: $6$4wllyuda$9AxoI7rjB6a6at6AUoK4ElbTxhiRlW8VAtIugxZAkfjtMBLHYo.eJW2GTHEEuyXNFUhUHTAEXt5oAnU4s7Q6j0
     key: "{{ lookup('file', 'pmorahan.pubkeys') }}"
+  jwenn:
+    state: present
+    remove: no
+    uid: 2001
+    groups: sudo,systemd-journal
+    shell: /bin/bash
+    passhash: $6$yYIOgwiXWYhi$7Ghjjs9Qdf0V/TL4Vtu4diDj/n3sRrZUDDQVqszLGSuIjdxJj.1bMhHKPLBpEJ7TP3qtdhQvLPc86ywZPCS/v0
+    key: "{{ lookup('file', 'jwenn.pubkeys') }}"
 
 
 
