@@ -1,0 +1,5 @@
+---
+
+- include: active-directory.yml
+  ignore_errors: '{{ ansible_check_mode }}'
+  tags: bootstrap init domain ad

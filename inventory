@@ -5,18 +5,14 @@
 # Ansible tasks can be filtered on multiple groups for better targetting - see the
 # bootstrap role's tasks/main.yml for an example
 #
-# This file does not do nested groups well - duplicate group names cause weird behaviour
-# (eg: an 'aws' group under both linux and windows will read both config files, and
-# you'll end up with a windows connection attempt against a linux host). Not that
-# duplicate *hosts* names are fine (and expected workflow)
-#
 # the 'children:' thing is a legacy issue from when this file was in .ini format.
 # it means that the subelements are also groups
 all:
     children:
-        bootstrap:
+        bootstrap_linux:
             hosts:
-                jumphost-slvops:
+        bootstrap_windows:
+            hosts:
 
         linux:
             hosts:
@@ -28,7 +24,11 @@ all:
 
         windows:
             hosts:
-                l33th4x3nb0x:
+                ansibletesthost:
+                    #ansible_host: 10.3.8.208
+                    ansible_host: ansibletesthost.STAFF.LOCAL
+                    #ansible_winrm_kerberos_hostname_override: ansibletesthost
+                    #ansible_winrm_service: WSMAN
 
         aws:
             hosts:

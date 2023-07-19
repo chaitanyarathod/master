@@ -1,22 +1,47 @@
 ---
 
-# The bootstrapping role is for doing tasks to do minimal initialisation of a
-# server, to get it into a state where it can accept its normal playbook.
-# Mostly it's about initial admin user setup, allowing further changes to be
-# made, but any other "must happen very early on" changes can be made here.
-
 # the bootstrap playbook is only meant to be run once, to bootstrap, and then
 # the usual playbook should be run for that server
 
-# To run bootstrap, you will need to put the target host into the bootstrap
-# and linux/windows group, and specify the target's initial admin user on
-# the commandline. Other playbooks use your normal user, which will need admin
-# rights
+# For linux:
+# * put host into all relevant target groups, plus (temporarily) bootstrap_linux
+# * bootstrapping:
+#   * fiddles with shell settings
+#   * sets up initial linux user accounts + ssh keys
+# * initial admin user/sshkey depend on your setup image's settings
+#
+# ansible-playbook -u [admin user] --keyfile ~/.ssh/blah.key bootstrap.yml
+# NOTE: don't need a keyfile if you have the ssh key loaded into your ssh agent
 
-# ansible-playbook -i [prod|dev] -u $ADMIN_USER --keyfile ~/.ssh/blah.key bootstrap.yml
+# For Windows:
+# * put host into all relevant target groups, plus (temporarily) bootstrap_windows
+# * bootstrapping:
+#   * adds to Active Directory; users are subsequently drawn from there
+#   * uses 'ntlm' protocol, suitable for local admin users
+#       * other playbooks should use kerberos protocol, suitable for domain users (TODO)
+# * initial local admin user/pass depend on your setup wizard's settings
+#
+# ansible-playbook -k bootstrap.yml
+#
+# NOTE: -k will ask for 'ssh password', but it will be used for winrm/nltm for i
+#       the local Administrator user
+#       the bootstrap playbook uses the local administrator password, other playbooks
+#       use your domain user
 
-- hosts: bootstrap
+- hosts: bootstrap_linux
   become: true
   roles:
-  - bootstrap
+  - bootstrap-linux
   - users
+
+- hosts: bootstrap_windows
+  vars:
+    # vars here override group_vars
+    ad_domain_ou_path: "OU=Servers,DC=staff,DC=local"
+    ad_dns_domain_name: "staff.local"
+    # ntlm is suitable for local admin, kerberos for domain admin users
+    ansible_winrm_transport: ntlm
+    ansible_user: Administrator  # local admin user
+  roles:
+  - active-directory
+

@@ -1,0 +1,8 @@
+---
+
+- name: install automatic updates (apt) (security only by default)
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+    name:
+    - unattended-upgrades

@@ -1,0 +1,30 @@
+---
+# this doesn't get rid of the earlier '%sudo' line, but it seems to work
+# tried a few different regexp's and toggling backrefs, no luck
+- name: passwordless sudo
+  lineinfile:
+    dest: /etc/sudoers
+    state: present
+    regexp: '%sudo\s+ALL=\(ALL:ALL\)\s+ ALL'
+    line: '%sudo ALL=(ALL) NOPASSWD: ALL'
+    #backrefs: yes
+    validate: '/usr/sbin/visudo -cf %s'
+  when: passwordless_sudo
+  tags: sudo
+
+- name: install skel dotfiles
+  template:
+    src: "{{ item }}"
+    dest: /etc/skel/.{{ item | basename }}
+  with_fileglob:
+  - ../templates/skel/*
+
+- name: install aliases and vimrc for root
+  template:
+    src: skel/{{ item }}
+    dest: /root/.{{ item }}
+    force: no
+  with_items:
+  - bash_aliases
+  - vimrc
+

@@ -1,4 +1,5 @@
-# TODO:
-# instead of individual users, we'll probably
-# need to set up Active Directory enrollment here
-# or possibly as a separate module
+---
+
+# need at least a no-op here to avoid complaints in the log
+- debug:
+    msg: "Windows users applied via Active Directory membership"

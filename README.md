@@ -1,3 +1,56 @@
+## TODO
+
+Document this better. Stuff we needed to do to get kerberos/domain users working
+
+* use FQDNs in `inventory`, not IP address
+    * if you have to use an IP address, yo need to also have ansible_winrm_kerberos_hostname_override set to the hostname to use
+* python kerberos lib 1.1 (debian 11) is too old. 1.2+ please) pip3 install --upgrade
+* need to install kerberos libs
+    * `sudo apt-get install python-dev libkrb5-dev krb5-user`
+    * see https://docs.ansible.com/ansible/latest/os_guide/windows_winrm.html#kerberos for more detail
+* test kerberos auth with `kinit` before you try with ansible
+    * `kinit pmorahan` - do not add the domain. definitely don't use slv.vic.gov.au
+    * `klist` will show if you're current or not
+* the debian 11 pykerberos lib is too old, but it can be updated with pip3
+    * `pip3 install pykerberos --upgrade`
+* the domain user MUST be in the administrators group on the machine
+    * basically this is just the 'domain_admins'. this won't be changed
+* the following entries need to be in /etc/krb5.conf
+    * the capital letters MUST be capital
+
+```
+[libdefaults]
+	default_realm = STAFF.LOCAL
+
+[realms]
+	STAFF.LOCAL = {
+		kdc = staffdc01.staff.local
+		kdc = staffdc02.staff.local
+		admin_server = staffdc01.staff.local
+	}
+
+[domain_realm]
+        .staff.local = STAFF.LOCAL
+        staff.local = STAFF.LOCAL  # this line might not be necessary
+```
+
+```
+'Server not found in Kerberos database' - you're using an IP address, not an FQDN
+
+'kerberos: the specified credentials were rejected by the server' - creds correct, but not accepted (this turned out to be not in admin group)
+
+'Password incorrect while getting initial credentials' - you gave a bad password
+
+'kerberos: Bad HTTP response returned from server. Code 500' - your pykerberos lib is too old, update it
+```
+
+Bonus non-kerberos point:
+
+* hostname must be 15 chars or less
+    * this isn't kerberos-specific, but causes issues when attaching to domain as it's too long for the NETBIOS name
+        * ansible can't handle (seriously?) the interactive prompt asking to shorten the name
+
+
 # ansible-slv
 
 Ansible is a tool for configuring the content of servers (linux or windows).
@@ -96,6 +149,8 @@ Bootstrapping puts in the bare minimum to get a system working with other playbo
 
 You will need to put the hostname you're bootstrapping into at least the `bootstrap` and `linux`/`windows` group
 
+### Linux
+
 ```bash
 # the server I'm bootstrapping here has 'admin' as the initial image's
 # superuser. I already have the relevant ssh key loaded into my ssh key agent,
@@ -107,22 +162,41 @@ ansible-playbook -i prod -u admin bootstrap.yml --check
 ansible-playbook -i prod -u admin bootstrap.yml
 ```
 
+### Windows
+
+On the windows target, we need to enable the `winrm` protocol. We set this up initially to use basic auth, then we run a bootstrap playbook to add the machine to the domain and switch winrm from basic auth to certificate auth. After that we use normal server playbooks.
+
+```powershell
+winrm quickconfig
+
+```
+
+
+
+
+
+
 ## Ansible workstation setup
 ### Linux
 
 You will need:
 
-1. your own ssh key
+1. python, git, and this repo
+2. your own ssh key
     * once users are added to a machine, this is the key you connect with
-2. ssh keys for anything that needs to be bootstrapped
+3. ssh keys for anything that needs to be bootstrapped
     * eg: when you create an EC2 server, you specify an ssh key to use with it
     * this key is used to run the bootstrap playbook, which adds admin users
-3. ansible vault password in `~/.ansible/vault_password`, to access encrypted vars files
-4. ansible installed (2.10+)
+4. ansible vault password in `~/.ansible/vault_password`, to access encrypted vars files
+5. ansible installed (2.10+)
 
 ### Windows
 
-dunno yet
+Ansible cannot run natively on Windows, so you have to use Windows Subsystem for Linux (WSL)
+
+WSL is out of scope for this document, but the basics to install it are to run `wsl --install` from an Administrator cmd window, then reboot the machine.
+
+Once WSL is set up, the linux setup above can be configured within it.
 
 
 ## Things to try

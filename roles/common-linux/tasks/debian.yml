@@ -1,0 +1,17 @@
+- include: debian-security.yml
+  ignore_errors: '{{ ansible_check_mode }}'
+  tags:
+  - common
+  - security
+
+- include: debian-tools.yml
+  ignore_errors: '{{ ansible_check_mode }}'
+  tags:
+  - common
+  - tools
+
+- include: debian-user-config.yml
+  ignore_errors: '{{ ansible_check_mode }}'
+  tags:
+  - common
+  - user

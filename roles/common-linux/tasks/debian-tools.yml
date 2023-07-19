@@ -1,0 +1,23 @@
+---
+
+- name: install common tools (apt)
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+    name:
+    - byobu
+    - curl
+    - fail2ban
+    - htop
+    - iotop
+    - iftop
+    - locate
+    - lsof
+    - moreutils
+    - netcat-openbsd
+    - sysstat
+    - telnet
+    - unzip
+    - vim
+    - wget
+

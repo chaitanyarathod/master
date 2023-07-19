@@ -1,0 +1,1 @@
+../../bootstrap-linux/templates/etc-bash.bashrc

@@ -1,0 +1,6 @@
+ad_domain_ou_path: "OU=Servers,DC=staff,DC=local"
+ad_dns_domain_name: "staff.local"
+
+# ntlm is suitable for local admin, kerberos for domain admin users
+ansible_winrm_transport: ntlm
+ansible_user: Administrator  # local admin user

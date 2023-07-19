@@ -1,5 +1,7 @@
 ansible_connection: ssh
 
+passwordless_sudo: true
+
 # * give each user their own `uid` ahead of time... just trust me on this
 # * make the username follow their Active Directory pattern (first initial, surname)
 # * you can generate your own passhash with `mkpasswd -m sha-512`

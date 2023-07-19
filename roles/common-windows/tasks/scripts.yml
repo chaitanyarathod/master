@@ -1,0 +1,13 @@
+---
+
+- name: make scripts directory
+  win_file:
+    path: "{{ win_scripts_directory }}"
+    state: directory
+
+- name: common scripts
+  win_copy:
+    src: "{{ item }}"
+    dest: "{{ win_scripts_directory }}/{{ item | basename }}"
+  with_fileglob:
+  - ../files/scripts/* 

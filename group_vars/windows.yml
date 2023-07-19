@@ -1,2 +1,13 @@
 ansible_connection: winrm
-admin_users: true
+#ansible_winrm_transport: ntlm
+ansible_winrm_transport: kerberos  # requires AD cnx, replace with ntlm during bootstrap
+     # kerberos needs additional packages on the ansible host to work, plus
+    # some config questions during installation (TODO)
+    # https://docs.ansible.com/ansible/latest/os_guide/windows_winrm.html#installing-the-kerberos-library
+#ansible_winrm_scheme: https not needed for ntlm or keberos
+#ansible_port: 5986
+ansible_winrm_scheme: http
+ansible_port: 5985
+
+
+win_scripts_directory: 'C:\scripts\'

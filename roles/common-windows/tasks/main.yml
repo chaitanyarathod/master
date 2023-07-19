@@ -1,0 +1,5 @@
+- include: scripts.yml
+  ignore_errors: '{{ ansible_check_mode }}'
+  tags:
+  - common
+  - scripts

@@ -1,0 +1,13 @@
+---
+
+- name: join server to domain
+  ansible.windows.win_domain_membership:
+    hostname: "{{ inventory_hostname }}"
+    domain_admin_user: "{{ win_domain_admin_user }}"
+    domain_admin_password: "{{ win_domain_admin_pass }}"
+    domain_ou_path: "{{ win_domain_ou_path }}"
+    state: domain
+  register: domain_state
+
+- ansible.windows.win_reboot:
+  when: domain_state.reboot_required
