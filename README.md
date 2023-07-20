@@ -6,7 +6,7 @@ To set up your workstation with Ansible, see the end of this README.
 
 ## Run a playbook
 
-The day-to-day operation of Ansible is to run a playbook against an inventory file (`prod`, `dev`)
+The day-to-day operation of Ansible is to run a playbook to run given tasks.
 
 ```bash
 ## linux
@@ -20,6 +20,11 @@ ansible-playbook jumphosts.yml
 # Run the jumphosts playbook against a specific server group or specific hostname
 ansible-playbook -l jumphost-slv jumphosts.yml --check
 ansible-playbook -l jumphost-slv jumphosts.yml
+
+# Limit the playbook to only those tasks wtih a particular tag
+# Below we are just running the tasks tagged with 'users'
+ansible-playbook -l jumphost-slv jumphosts.yml -t users --check
+ansible-playbook -l jumphost-slv jumphosts.yml -t users
 ```
 
 ```bash
