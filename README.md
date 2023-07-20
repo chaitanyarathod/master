@@ -175,7 +175,8 @@ Before we try to use Ansible, we need to get the ability to auth against kerbero
 
 * `apt install python-dev libkrb5-dev krb5-user` (also install ansible and git as above)
     * your `pykerberos` library must be v1.2 or later (check via apt or pip3, depending on installation method)
-    * `pip install pykerberos --upgrade` fixed my old version installed with apt
+    * `pip3 install pykerberos --upgrade` fixed my old version installed with apt
+        * if you don't have pip3, install it with `apt install python3-pip`
 * replace the file at `/etc/krb5.conf` with the one in this repo at `conf/kerberos/krb5.conf`
     * if you want to modify your own existing file, these are the mandatory elements:
         * `default_realm` must be in CAPITALS
