@@ -1,56 +1,3 @@
-## TODO
-
-Document this better. Stuff we needed to do to get kerberos/domain users working
-
-* use FQDNs in `inventory`, not IP address
-    * if you have to use an IP address, yo need to also have ansible_winrm_kerberos_hostname_override set to the hostname to use
-* python kerberos lib 1.1 (debian 11) is too old. 1.2+ please) pip3 install --upgrade
-* need to install kerberos libs
-    * `sudo apt-get install python-dev libkrb5-dev krb5-user`
-    * see https://docs.ansible.com/ansible/latest/os_guide/windows_winrm.html#kerberos for more detail
-* test kerberos auth with `kinit` before you try with ansible
-    * `kinit pmorahan` - do not add the domain. definitely don't use slv.vic.gov.au
-    * `klist` will show if you're current or not
-* the debian 11 pykerberos lib is too old, but it can be updated with pip3
-    * `pip3 install pykerberos --upgrade`
-* the domain user MUST be in the administrators group on the machine
-    * basically this is just the 'domain_admins'. this won't be changed
-* the following entries need to be in /etc/krb5.conf
-    * the capital letters MUST be capital
-
-```
-[libdefaults]
-	default_realm = STAFF.LOCAL
-
-[realms]
-	STAFF.LOCAL = {
-		kdc = staffdc01.staff.local
-		kdc = staffdc02.staff.local
-		admin_server = staffdc01.staff.local
-	}
-
-[domain_realm]
-        .staff.local = STAFF.LOCAL
-        staff.local = STAFF.LOCAL  # this line might not be necessary
-```
-
-```
-'Server not found in Kerberos database' - you're using an IP address, not an FQDN
-
-'kerberos: the specified credentials were rejected by the server' - creds correct, but not accepted (this turned out to be not in admin group)
-
-'Password incorrect while getting initial credentials' - you gave a bad password
-
-'kerberos: Bad HTTP response returned from server. Code 500' - your pykerberos lib is too old, update it
-```
-
-Bonus non-kerberos point:
-
-* hostname must be 15 chars or less
-    * this isn't kerberos-specific, but causes issues when attaching to domain as it's too long for the NETBIOS name
-        * ansible can't handle (seriously?) the interactive prompt asking to shorten the name
-
-
 # ansible-slv
 
 Ansible is a tool for configuring the content of servers (linux or windows).
@@ -69,12 +16,24 @@ The day-to-day operation of Ansible is to run a playbook against an inventory fi
 # key loaded
 
 # Run the jumphosts playbook against the prod servers. Always run with --check first (dry run)
-ansible-playbook -i prod jumphosts.yml --check
-ansible-playbook -i prod jumphosts.yml
+ansible-playbook jumphosts.yml --check
+ansible-playbook jumphosts.yml
 
 # Run the jumphosts playbook against a specific server group or specific hostname
-ansible-playbook -i prod -l jumphost-slv jumphosts.yml --check
-ansible-playbook -i prod -l jumphost-slv jumphosts.yml
+ansible-playbook -l jumphost-slv jumphosts.yml --check
+ansible-playbook -l jumphost-slv jumphosts.yml
+```
+
+```bash
+## windows
+# we need to provide our username and password when we call the playbook
+# -k provides a password prompt called `SSH password`, but it is used for kerberos here
+ansible-playbook -u pmorahan -k win_example.yml --check
+ansible-playbook -u pmorahan -k win_example.yml
+
+## windows bootstrap
+# Here we provide the local Administrator password we used to set up the box
+ansible-playbook -u Administrator -k bootstrap.yml
 ```
 
 ### Always run \-\-check first
@@ -85,33 +44,11 @@ The roles need to be written to use 'check mode', see `tasks/main.yml` for how t
 
 Note that not all errors are really *problems* in a dry run - you need to read the log. Some errors are because that item cannot be confirmed because the system is not set up yet. For example, the system can't check the presence of an ssh key on a user if that user does not exist yet. If the user is set up in a previous step, we can then ignore the error on the 'add ssh key' step. TL;DR: read the red text and use your noggin
 
-## Inventory files
-
-We have two inventory files, `prod` and `dev`. They're separated just as an extra layer of safety - some changes can be experimented with in the dev file, and then ported across to prod when ready.
-
-The inventory file has a weird layer called 'children'. This is a hangover from the .ini format of the inventory file, and simply means that the subelements of this group are also groups themselves. Just ignore it.
-
-When adding a new host, ensure it's in all the groups that are relevant to it in the inventory file.
-
-### Flat 'group' structure
-
-The groups themselves can be nested, but we're using a flat approach. This means that adding a single new host should go in several groups - all that are relevant to the host. If we used a nested approach to groups, we would need to be careful that all group names were unique, since Ansible will read *all* groups of the requested name for variables. Example: I had a nested arrangement with 'webservers' in both the 'linux' and 'windows' groups. Ansible was reading both entries for variables, and then trying to connect to the linux server with a windows protocol.
-
-### Dynamic inventory
-
-We don't currently use this, but it is possible to set up Ansible to query your IaaS for VMs to configure, rather than have a predetermined list.
-
 ## External modules/roles
 
 Try and avoid using external modules/roles made by other users. These tend not to be 'generic' and make assumptions about the environment that are often wrong for us. From experience, it takes longer to debug these issues than to just write our own roles, porting in the functionality we want.
 
 Roles written by well-known authors tend to be more suitable for generic use. Just don't use external roles blindly.
-
-## Linux vs Windows
-
-When making a new role, split actions into separate linux and windows segments in the `tasks/main.yml` file. See the bootstrap role for how to do this.
-
-This should still be done for consistency when the role can only be used in one or the other (eg: installing a toolchain that only runs on one)
 
 ### Users on servers
 
@@ -129,7 +66,7 @@ If a particular dev user needs sudo on a particular server, this setup does not 
 
 ## Inventory files, groups, group vars, host vars
 
-The inventory files `prod` and `dev` are separate to make things a little safer. Do experimental work on `dev` servers, and then port the setup to `prod` servers.
+At the moment we're just using a single `inventory` file, but we can split this into separate `prod`/`dev`/whatever files at a later date
 
 Each inventory file is made up of a number of groups, and you'll put a host in several groups at the same time. These inventory files don't deal with nested groups very well, and if you duplicate a group name you can get unexpected behaviour as then ansible will pull all group vars in at the same time. Having all groups at the same 'level' in the file helps avoid this problem.
 
@@ -145,9 +82,9 @@ allows us to save secrets. you'll need a password in `~/.ansible/vault_password`
 
 ## Bootstrap an unconfigured server
 
-Bootstrapping puts in the bare minimum to get a system working with other playbooks. Essentially it installs superadmins and any related tooling. Regular non-bootstrap playbooks should take care of further functionality.
+Bootstrapping puts in the *bare minimum* to get a system working with other playbooks. Essentially it installs superadmins and any related initial setup tooling. Regular non-bootstrap playbooks should take care of further functionality - bootstrap commands will often also be in the 'common' role, and anything that needs to be present in general should also be in 'common'. Bootstrap geerally gets run only once, whereas 'common' is repeated.
 
-You will need to put the hostname you're bootstrapping into at least the `bootstrap` and `linux`/`windows` group
+You will need to put the hostname you're bootstrapping into at least the `bootstrap` and `linux`/`windows` group in the `inventory` file
 
 ### Linux
 
@@ -157,9 +94,9 @@ You will need to put the hostname you're bootstrapping into at least the `bootst
 # otherwise I could specify the file with --keyfile ~/.ssh/blah.key
 
 # always run with 'check' first, to avoid nasty surprises
-ansible-playbook -i prod -u admin bootstrap.yml --check
+ansible-playbook -u admin bootstrap.yml --check
 
-ansible-playbook -i prod -u admin bootstrap.yml
+ansible-playbook -u admin bootstrap.yml
 ```
 
 ### Windows
@@ -171,35 +108,110 @@ winrm quickconfig
 
 ```
 
+We add the host to be bootstrapped into the inventory file in the 'windows' group, the 'bootstrap' group, and any others that are appropriate. While it's in the bootstrap group, it uses an old, slow auth protocol, which allows us to connect with the local Administrator
 
+#### NTLM vs Kerberos
 
+NTLM is very old, but allows us to connect with the local Administrator account. The bootstrap playbook defaults to this protocol.
 
+Kerberos uses our Active Directory accounts and runs at normal speed. Kerberos won't be used while the target server is in the `bootsrap` group in the `inventory` file
 
+#### Hostname 15 character limit
 
-## Ansible workstation setup
-### Linux
+Windows hostnames should be 15 characters or less. When we set the hostname via Ansible and it's longer than 15 characters, an interactive prompt happens that Ansible can't happen. This is Windows asking to truncate the NETBIOS version of the hostname. Haven't figured out how to avoid this yet, so don't exceed 15 chars for now.
 
-You will need:
+----
 
-1. python, git, and this repo
-2. your own ssh key
-    * once users are added to a machine, this is the key you connect with
-3. ssh keys for anything that needs to be bootstrapped
-    * eg: when you create an EC2 server, you specify an ssh key to use with it
-    * this key is used to run the bootstrap playbook, which adds admin users
-4. ansible vault password in `~/.ansible/vault_password`, to access encrypted vars files
-5. ansible installed (2.10+)
+## Ansible admin / workstation setup
 
 ### Windows
 
-Ansible cannot run natively on Windows, so you have to use Windows Subsystem for Linux (WSL)
+Ansible does not support being run from windows. Use Windows Subsystem for Linux (WSL) and install it there following the guide for Linux below. WSL setup is out of scope for this document, but doco is here: https://learn.microsoft.com/en-us/windows/wsl/install
 
-WSL is out of scope for this document, but the basics to install it are to run `wsl --install` from an Administrator cmd window, then reboot the machine.
+WSL installs Ubuntu by default. The Linux setup below was determined on a Debian box, which is pretty similar.
 
-Once WSL is set up, the linux setup above can be configured within it.
+### Linux
+
+#### Setting up Ansible
+
+* `apt install ansible git`, and clone this repo
+
+For accessing target machines, there is no central 'ansible' or 'deploy' user. For boostrapping (see above) you use the OS's own local admin user. For other playbooks, you use your own personal linux or windows/AD user account, depending on the target machine.
+
+##### Ansible Vault password
+
+Talk to someone who already has it. You can store it in `~/.ansible/vault_pass` and it should be automatically used to decrypt Vault-protected files.
+
+#### Setting up auth for targetting Linux machines
+
+Ansible uses stock ssh, so you will need an ssh key. Another admin will need to add you to the linux users list, which is kept in `group_vars/linux.yml`. The playbook will then need to be run to apply your user to the target servers.
+
+Your **public** ssh key needs to be committed in this repo in `roles/users/files/` - this gets copied to the servers as `/home/USER/.ssh/authorized_keys`, and can hold multiple public keys.
+
+Bootstrapping a linux server happens before we've added our users - for bootstrap, you use the admin user+pass/key that your source image set up. After bootstrap, you use your normal user + ssh key
+
+If you can ssh to a target machine and use `sudo`, you can run an Ansible playbook
+
+#### Setting up auth for targetting Windows machines
+
+For bootstrapping Windows machines, you just need the local Administrator password, and we use the `ntlm` protocol (very slow)
+
+For our other playbooks we use our Active Directory users. Bootstrapping puts the machine onto our AD system, and from there we can use our regular AS users. The trick is getting auth on those users from a linux box that isn't on the domain.
+
+##### Setting up kerberos auth
+
+Before we try to use Ansible, we need to get the ability to auth against kerberos (Active Directory)
+
+* `apt install python-dev libkrb5-dev krb5-user` (also install ansible and git as above)
+    * your `pykerberos` library must be v1.2 or later (check via apt or pip3, depending on installation method)
+    * `pip install pykerberos --upgrade` fixed my old version installed with apt
+* replace the file at `/etc/krb5.conf` with the one in this repo at `conf/kerberos/krb5.conf`
+    * if you want to modify your own existing file, these are the mandatory elements:
+        * `default_realm` must be in CAPITALS
+        * the `[realms]` domain must be in CAPITALS
+            * the settings in here must match our domain's nodes, of course
+        * there must be an entry for .staff.local in `[domain_realms]`
+        * `dns_lookup_realm` likely needs to be false (not sure)
+    * there is no service to restart - this file is read each time you try to auth
+
+Once the above is done, you can test your login with the following commands. Get this working before you try to run Ansible against Windows
+
+```bash
+# your Active Directory user, with no domain. Enter your usual password when asked
+kinit pmorahan
+
+# confirm you have an auth'd ticket that is current/not expired
+klist
+```
+
+##### Setting up Ansible with Kerberos
+
+After you have `kinit` working, try a test Ansible run with `--check` enabled. This will flush out any additional auth issues (eg: old pykerberos library). Once that is successful, you can now use your Active Directory user against bootstrapped Windows targets
+
+Some Ansible kerberos auth errors and what they meant for us:
+
+```
+'Server not found in Kerberos database'
+# you're using an IP address in the inventory file
+# change `ansible_hostname` to use an FQDN
+
+'kerberos: the specified credentials were rejected by the server'
+# your creds are (probably) correct, but not accepted as admin by the target server
+# this happens if your user is not in the administrator group - this is an AD issue,
+# not ansible/server
+# either get yourself into the admins group, or use a different user
+
+'Password incorrect while getting initial credentials'
+# you entered a bad password
 
 
-## Things to try
+'kerberos: Bad HTTP response returned from server. Code 500'
+# your pykerberos lib is too old, update it
+```
+
+---
+
+## Things to try; Tasks TODO
 
 ### Adding a user
 
@@ -218,3 +230,14 @@ The linux users are kept in a dict in `group_vars/linux.yml`. Try adding a new u
 8. log into the sandbox and see if your user is there
 9. edit the new user to toggle the 'remove' field
 10. rerun Ansible against the sandbox machine to remove that user
+
+
+### Disable ssh password auth
+
+After bootstrap, ssh keys for admins are on the servers and we should disable ssh password auth. This should be in the common role for linux, but is not currently set - the debian AWS AMIs used so far already have this setting (most AMIs will) but on-prem linux boxes do not have this setting.
+
+This functionality needs to be added, but I haven't gotten around to it yet
+
+### Ensure 'basic auth' is disabled in winrm
+
+It should be by default, but we should have a task in common-windows to ensure it's turned off. NTLM and Kerberos are both encrypted login protocols and should be left enabled.

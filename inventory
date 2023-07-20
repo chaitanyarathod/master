@@ -1,4 +1,5 @@
 # Put your host in all groups that apply. You only need to put config items on one entry
+#
 # The groups here affect which group_vars/ files are loaded, along with whatever you
 # put on the command line.
 #
@@ -18,17 +19,21 @@ all:
             hosts:
                 jumphost-slvops:
                     ansible_ssh_host: jump.slv.tools # DNS/IP address as target
-                devel:    # TODO: move this out of the 'prod' inventory file, it's just here as an example
+                devel:
                     ansible_ssh_host: devel
 
 
         windows:
+            # bootstrap:
+            # * use either IP addresses or hostnames
+            # normal playbooks:
+            # * use hostnames instead of IP addresses for ansible_host
+            # * if you must use IP addresses, then put the hostname in `ansible_winrm_kerberos_hostname_override`
             hosts:
                 ansibletesthost:
                     #ansible_host: 10.3.8.208
                     ansible_host: ansibletesthost.STAFF.LOCAL
                     #ansible_winrm_kerberos_hostname_override: ansibletesthost
-                    #ansible_winrm_service: WSMAN
 
         aws:
             hosts:
