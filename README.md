@@ -1,10 +1,8 @@
 # ansible-slv
 
-Ansible is a tool for configuring the content of servers (linux or windows).
+Ansible is a tool for configuring the content of servers (linux or windows). Terraform is used to automate *infrastructure*, Ansible is used to manage *content* of virtual machines, and Docker is used to manage *content* of containers.
 
-The servers themselves can be launched with Terraform (infrastructure config), but it can't handle content well - which apps are installed, or how their config files looks, or which users are enabled, so on and so forth.
-
-To set up your workstation with Ansible, see the end of this README. To set up a brand new machine, see the 'bootstrap' section.
+To set up your workstation with Ansible, see the end of this README.
 
 ## Run a playbook
 
@@ -26,7 +24,7 @@ ansible-playbook -l jumphost-slv jumphosts.yml
 
 ```bash
 ## windows
-# we need to provide our username and password when we call the playbook
+# we need to provide our Active Directory username and password when we call the playbook
 # -k provides a password prompt called `SSH password`, but it is used for kerberos here
 ansible-playbook -u pmorahan -k win_example.yml --check
 ansible-playbook -u pmorahan -k win_example.yml
@@ -44,7 +42,7 @@ The roles need to be written to use 'check mode', see `tasks/main.yml` for how t
 
 Note that not all errors are really *problems* in a dry run - you need to read the log. Some errors are because that item cannot be confirmed because the system is not set up yet. For example, the system can't check the presence of an ssh key on a user if that user does not exist yet. If the user is set up in a previous step, we can then ignore the error on the 'add ssh key' step. TL;DR: read the red text and use your noggin
 
-## External modules/roles
+### External modules/roles
 
 Try and avoid using external modules/roles made by other users. These tend not to be 'generic' and make assumptions about the environment that are often wrong for us. From experience, it takes longer to debug these issues than to just write our own roles, porting in the functionality we want.
 
@@ -52,9 +50,9 @@ Roles written by well-known authors tend to be more suitable for generic use. Ju
 
 ### Users on servers
 
-Windows users are expected to be managed via our Active Directory domain - when the server is added to AD, the users should come with it.
+Windows users are expected to be managed via our Active Directory domain - when the server is added to AD, the users should come with it. We don't generally install Windows users via Ansible
 
-Linux users are not currently planned to be domain-provided. There are dicts in `group_vars/linux.html` relating to users
+Linux users are not provided by Active Directory. The linux users are listed in `group_vars/linux.html` - a linux host needs to be in the `linux` group to get these users.
 
 * `admin_users` have sudo rights and should be installed everywhere
     * sudo rights = being in the `sudo` group
@@ -62,7 +60,11 @@ Linux users are not currently planned to be domain-provided. There are dicts in 
 * `group_users` and `host_users` do not exist yet, but allow a similar dict to be set in a group/host varfile
    * this allows us to add a specific user list for a specific task/app/server, should we need to
 
-If a particular dev user needs sudo on a particular server, this setup does not currently handle it. You could add the sudo group to their user, but that will give them sudo everywhere. Figure it out when we have a need.
+### Ansible Vault
+
+... allows us to save secrets. you'll need a password in `~/.ansible/vault_password` if you don't want to apply it every run
+
+`group_vars` and `host_vars` files encrypted with ansible vault are not readable with regular text tools - you'll need to do `ansible-vault edit PATH/TO/FILE`
 
 ## Inventory files, groups, group vars, host vars
 
@@ -74,11 +76,6 @@ The `group_vars/[group name].yml` file matches the groups listed in the inventor
 
 The `host_vars/[host name].yml` file matches the specific hostname, and behaves like the group vars file.
 
-## Ansible Vault
-
-allows us to save secrets. you'll need a password in `~/.ansible/vault_password` if you don't want to apply it every run
-
-`group_vars` and `host_vars` files encrypted with ansible vault are not readable with regular text tools - you'll need to do `ansible-vault edit PATH/TO/FILE`
 
 ## Bootstrap an unconfigured server
 
@@ -112,7 +109,7 @@ We add the host to be bootstrapped into the inventory file in the 'windows' grou
 
 #### NTLM vs Kerberos
 
-NTLM is very old, but allows us to connect with the local Administrator account. The bootstrap playbook defaults to this protocol.
+NTLM is very old, but allows us to connect with the local Administrator account. The bootstrap playbook defaults to this protocol. NTLM is also a very slow protocol, which really slows down Ansible playbook runs as they do a lot of auth'ing.
 
 Kerberos uses our Active Directory accounts and runs at normal speed. Kerberos won't be used while the target server is in the `bootsrap` group in the `inventory` file
 
@@ -123,6 +120,15 @@ Windows hostnames should be 15 characters or less. When we set the hostname via 
 ----
 
 ## Ansible admin / workstation setup
+
+Short form:
+
+1. get yourself a linux install
+    * WSL on windows should be fine
+2. get your ssh set up
+3. get your kerberos/AD set up
+4. sort out the vault_pass file
+5. start running playbooks
 
 ### Windows
 
