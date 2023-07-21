@@ -106,11 +106,32 @@ ansible-playbook -u admin bootstrap.yml
 On the windows target, we need to enable the `winrm` protocol. We set this up initially to use basic auth, then we run a bootstrap playbook to add the machine to the domain and switch winrm from basic auth to certificate auth. After that we use normal server playbooks.
 
 ```powershell
+# enable winrm on target machine
 winrm quickconfig
-
 ```
 
-We add the host to be bootstrapped into the inventory file in the 'windows' group, the 'bootstrap' group, and any others that are appropriate. While it's in the bootstrap group, it uses an old, slow auth protocol, which allows us to connect with the local Administrator
+The target machine needs to be put into both the `windows` and the `bootstrap-windows` groups in the `inventory` file, along with any other appropriate groups. This calls in vars relevant to the connection.
+
+```bash
+# on ansible machine, we need to call the bootstrap playbook with the local Administrator creds
+ansible-playbook -u Administrator -k bootstrap.yml
+
+# the bootstrap playbook called as above will prompt for three things
+# * "ssh password" - actually used for Administrator over NTLM, not ssh. this prompt is from -k
+# * "domain admin" - an Active Directory user that is in the Domain Admins group
+# * "domain password" - password for the AD user
+# the AD user is required to add the machine to Active Directory and also change the hostname
+```
+
+So, in order to bootstrap a new Windows install, we need two sets of credentials:
+
+* the local Adminstrator, allowing Ansible to connect and do stuff
+* a Domain_Admin, used by the playbook to add the machine to the domain and update hostname
+    * as a non-domain admin, my AD user could add the machine to the domain, but not update the hostname
+
+After bootstrapping, we no longer need to use the local admin creds. The AD user we invoke the subsequent playbooks with needs to be in the local machine's 'admins' group - by default, this is only Domain_Admins.
+
+Yes, this is confusing, but it makes more sense as you get familiar with it. Auth sucks.
 
 #### NTLM vs Kerberos
 
