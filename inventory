@@ -34,6 +34,8 @@ all:
                     #ansible_host: 10.3.8.208
                     ansible_host: ansibletesthost.STAFF.LOCAL
                     #ansible_winrm_kerberos_hostname_override: ansibletesthost
+                ansibletest02:
+                    ansible_host: ansibletest02.STAFF.LOCAL
 
         aws:
             hosts:
