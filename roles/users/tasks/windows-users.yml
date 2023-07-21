@@ -1,5 +1,0 @@
----
-
-# need at least a no-op here to avoid complaints in the log
-- debug:
-    msg: "Windows users applied via Active Directory membership"

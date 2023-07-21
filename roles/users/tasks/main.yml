@@ -3,11 +3,4 @@
 - include: linux-users.yml
   ignore_errors: '{{ ansible_check_mode }}'
   tags: users
-  when:
-  - "'linux' in group_names"
 
-- include: windows-users.yml
-  ignore_errors: '{{ ansible_check_mode }}'
-  tags: users
-  when:
-  - "'windows' in group_names"

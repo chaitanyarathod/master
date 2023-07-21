@@ -34,7 +34,16 @@
   - bootstrap-linux
   - users
 
+
 - hosts: bootstrap_windows
+  vars_prompt:
+  - name: win_domain_admin_user
+    prompt: AD user to add machine to domain
+    private: false
+
+  - name: win_domain_admin_password
+    prompt: AD password to add machine to domain
+
   vars:
     # vars here override group_vars
     ad_domain_ou_path: "OU=Servers,DC=staff,DC=local"

@@ -28,8 +28,22 @@ admin_user_list:
     shell: /bin/bash
     passhash: $6$yYIOgwiXWYhi$7Ghjjs9Qdf0V/TL4Vtu4diDj/n3sRrZUDDQVqszLGSuIjdxJj.1bMhHKPLBpEJ7TP3qtdhQvLPc86ywZPCS/v0
     key: "{{ lookup('file', 'jwenn.pubkeys') }}"
-
-
+  cbhukya:
+    state: present
+    remove: no
+    uid: 2002
+    groups: sudo,systemd-journal
+    shell: /bin/bash
+    passhash: $6$yYIOgwiXWYhi$7Ghjjs9Qdf0V/TL4Vtu4diDj/n3sRrZUDDQVqszLGSuIjdxJj.1bMhHKPLBpEJ7TP3qtdhQvLPc86ywZPCS/v0
+    key: "{{ lookup('file', 'cbhukya.pubkeys') }}"
+  kwijesinghe:
+    state: present
+    remove: no
+    uid: 2003
+    groups: sudo,systemd-journal
+    shell: /bin/bash
+    passhash: $6$yYIOgwiXWYhi$7Ghjjs9Qdf0V/TL4Vtu4diDj/n3sRrZUDDQVqszLGSuIjdxJj.1bMhHKPLBpEJ7TP3qtdhQvLPc86ywZPCS/v0
+    key: "{{ lookup('file', 'kwijesinghe.pubkeys') }}"
 
 # dev users should be applied at the group/host level
 # define `add_dev_users: true` to add them in the relevant group_vars file,
