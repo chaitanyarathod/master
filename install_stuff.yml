@@ -16,5 +16,25 @@
     apt:
       name: php
       state: present
-    become: yes 
+    become: yes
+
+  - name : Install required packages
+    apt:
+      name: "{{item}}"
+      state: present
+    with_items:
+      - php
+      - mysql-server
+      - mysql-client
+      - snmp
+      - snmpd
+      - php-mysql
+      - php-xml
+      - rrdtool
+
+  - name : Install Cacti
+    apt:
+      name: cacti
+      state: present
+    become: yes
        
