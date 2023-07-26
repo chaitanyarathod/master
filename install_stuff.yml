@@ -1,0 +1,20 @@
+- name: Install nginx on Ubuntu
+  hosts: localhost
+  tasks:
+  - name: Update Cache
+    apt:
+      update_cache: yes
+    become: yes
+
+  - name: Install Nginx
+    apt:
+      name: nginx
+      state: present
+    become: yes
+ 
+  - name: Install PHP
+    apt:
+      name: php
+      state: present
+    become: yes 
+       
